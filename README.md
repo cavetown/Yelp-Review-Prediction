@@ -10,13 +10,6 @@ On Yelp, a restaurant can have over hundreds of reviews, and it is difficult for
 
 3. **Prediction**: For the module training, we will use pretrained ConceptNet Numberbatch embeddings (https://github.com/commonsense/conceptnet-numberbatch) and an 2-Layer GRU RNN in order to predict the star rating for a review. The main framework for this project is TensorFlow. 
 
-4. **Visualization**: To visualize our results, we will use the Matplotlib libraries and TensorBoard.
-
-## Installation
-pip install -r requirements.txt
-
 ## Usage
-1. The main file to run is Preprocessing.ipynb for preprocessing. Pleasure be sure to download business.json and review.json from https://www.yelp.com/dataset/challenge, also install nltk package and call nltk.download('all') before running. The program will output all reviews' feature vectors and star numbers into features.csv and stars.csv files.  
-2. The main file to run is tf_rnn_yelp.ipynb for training. It is a jupyter notebook file so it will require jupyter installed. 
+The main file to run is tf_rnn_yelp.ipynb for training. It is a jupyter notebook file so it will require jupyter installed. 
 The file is self sustained and the only things required to run are the datasets and embedding (which there is a link for in the markdowns). Markdowns inside the notebook explain each procedure and what it is accomplishing along with variables easily modifiable.
-There are pickled files uploaded on to the repository to try out with the code.
