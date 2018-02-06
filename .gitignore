@@ -1,0 +1,16 @@
+
+*.json
+*.csv
+embeddings/numberbatch-en-17.06.txt.gz
+*.DESKTOP-BP369NE
+*.h5
+data/pickles/tokenizer.p
+data/pickles/category_ratings.p
+data/pickles/balanced_reviews.p
+embeddings/numberbatch-en.txt
+saves/best_model_100k.ckpt.data-00000-of-00001
+saves/best_model_100k.ckpt.index
+saves/best_model_100k.ckpt.meta
+saves/best_model_50k.ckpt.data-00000-of-00001
+saves/best_model_50k.ckpt.index
+saves/best_model_50k.ckpt.meta
