@@ -14,7 +14,7 @@ def loadfiles(filename):
     saved_stuff.close()
     return stuff
 
-def clean_text(text):
+def clean_text(text, contractions):
     text = text.lower()    
     if True:
         text = text.split()
