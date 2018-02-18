@@ -6,7 +6,7 @@ class Tokenizer():
         self.threshold = threshold
         self.word_counts = {}
 
-    def _CountWords(self, text):
+    def _count_words(self, text):
         for sentence in text:
             for word in sentence.split():
                 if word not in self.word_counts:
@@ -16,7 +16,7 @@ class Tokenizer():
         print("Size of Vocabulary: " , len(self.word_counts))
 
 
-    def FitOnTexts(self, texts, embeddings_index):
+    def fit_on_texts(self, texts, embeddings_index):
         ''' Function fits the tokenizer class based on what's available in embeddings index
         :param texts: Type list of lists with with each row containing preprocessed reviews
         :param embeddings_index: Dictionary of words from reviews mapping to an embedding vector from embeddings used
@@ -37,7 +37,7 @@ class Tokenizer():
         print("Number of words we will use:", len(self.word2int))
         print("Percent of words we will use: {}%".format(usage_ratio))
 
-    def TextToSequence(self, text, pred=False):
+    def text_to_sequence(self, text, pred=False):
         '''
         Function to convert a text input into tokenized list.
         :param text: List of lists of reviews to be tokenized
