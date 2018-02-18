@@ -3,18 +3,18 @@ import numpy as np
 import nltk, re
 from nltk.corpus import stopwords
 
-def picklefiles(filename, stuff):
+def PickleFiles(filename, stuff):
     save_stuff = open(filename, "wb")
     pickle.dump(stuff, save_stuff)
     save_stuff.close()
 
-def loadfiles(filename):
+def LoadFiles(filename):
     saved_stuff = open(filename,"rb")
     stuff = pickle.load(saved_stuff)
     saved_stuff.close()
     return stuff
 
-def clean_text(text, contractions):
+def CleanText(text, contractions):
     text = text.lower()    
     if True:
         text = text.split()
@@ -38,7 +38,7 @@ def clean_text(text, contractions):
     text = " ".join(text)
     return text
 
-def balance_dataframe(df, category=['stars']):
+def BalanceDataframe(df, category=['stars']):
     """
     :param df: pandas.DataFrame
     :param categorical_columns: iterable of categorical columns names contained in {df}
@@ -56,7 +56,7 @@ def balance_dataframe(df, category=['stars']):
     return df
 
 
-def pad_batch(batch):
+def PadBatch(batch, word2int):
     # Want to pad this way since tensorflow preprocessing pads with 0's, which can eventually lead to zero tensors
     lengths = []
     for text in batch:
@@ -68,7 +68,7 @@ def pad_batch(batch):
                                                              value=word2int['<pad>'])
     return pad_text
 
-def get_batches(x, y, batch_size):
+def GetBatches(x, y, batch_size):
     # Make sure to not exceed amount of data
     for batch_i in range(0, len(x)//batch_size):
         start = batch_i * batch_size
@@ -78,7 +78,7 @@ def get_batches(x, y, batch_size):
         pad_batch_x = np.array(pad_batch(batch_x))
         yield pad_batch_x, labels
         
-def get_test_batches(x, batch_size):
+def GetTestBatches(x, batch_size):
     for batch_i in range(0, len(x)//batch_size):
         start = batch_i * batch_size
         end = start+batch_size

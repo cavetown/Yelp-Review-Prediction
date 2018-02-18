@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description="Specify number of reviews to parse
 parser.add_argument("-n", "--num_reviews", type=int, default=100000, help="Specify batch size for network")
 args = parser.parse_args()
 
-def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dataset/review.json'):
+def ProcessReviews(bus_file='.data/dataset/business.json', rev_file='./data/dataset/review.json'):
     restId = []
     for line in open(bus_file, 'r'):
         data = json.loads(line)
@@ -38,7 +38,7 @@ def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dat
             continue
         try:
             if detect(text) == 'en':
-                revs_list.append(utils.clean_text(text, contractions))
+                revs_list.append(utils.CleanText(text, contractions))
                 stars_list.append(star)
                 k += 1
                 # Notify for every 5000 reviews

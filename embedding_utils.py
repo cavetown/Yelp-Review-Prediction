@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def load_embeddings(path='./embeddings/numberbatch-en.txt'):
+def LoadEmbeddings(path='./embeddings/numberbatch-en.txt'):
     ''' Function to initialize embeddings and assign words in embeddings to specific value
     '''
     embeddings_index = {}
@@ -13,7 +13,7 @@ def load_embeddings(path='./embeddings/numberbatch-en.txt'):
             embeddings_index[word] = embedding
     return embeddings_index
 
-def create_embedding_matrix(word2int, embeddings_index, embedding_dim=300):
+def CreateEmbeddingMatrix(word2int, embeddings_index, embedding_dim=300):
     '''
     Function creates am embedding matrix based off of whats contained in reviews versus embeddings
     :param word2int: Dictionary of words mapped to values from tokenizer
