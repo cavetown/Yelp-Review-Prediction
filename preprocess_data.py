@@ -5,7 +5,6 @@ from contractions import get_contractions
 import argparse
 import numpy as np
 import pandas as pd
-from nltk.corpus import stopwords
 
 parser = argparse.ArgumentParser(description="Specify number of reviews to parse")
 parser.add_argument("-n", "--num_reviews", type=int, default=100000, help="Specify batch size for network")

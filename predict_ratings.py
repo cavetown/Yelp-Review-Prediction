@@ -42,8 +42,10 @@ NUM_CLASSES = 6
 def model_inputs():
     # Should be [batch_size x review length]
     input_data = tf.placeholder(tf.int32, [None, None], name='input')
+
     # Should be [batch_size x num_classes]
     labels = tf.placeholder(tf.int32, [None, None], name='labels')
+
     lr = tf.placeholder(tf.float32, name='learning_rate')
     keep_prob = tf.placeholder(tf.float32, name='keep_prob')
     return input_data, labels, lr, keep_prob
@@ -73,14 +75,14 @@ with train_graph.as_default():
     with tf.name_scope("RNN_Layers"):
         stacked_rnn = []
         for layer in range(args.num_layers):
-            cell_fw = tf.contrib.rnn.GRUCell(rnn_size)
+            cell_fw = tf.contrib.rnn.GRUCell(args.hidden_units)
             cell_fw = tf.contrib.rnn.DropoutWrapper(cell_fw,
                                                     output_keep_prob=keep_prob)
             stacked_rnn.append(cell_fw)
         multilayer_cell = tf.contrib.rnn.MultiRNNCell(stacked_rnn, state_is_tuple=True)
 
     with tf.name_scope("init_state"):
-        initial_state = multilayer_cell.zero_state(batch_size, tf.float32)
+        initial_state = multilayer_cell.zero_state(args.batch_size, tf.float32)
 
     with tf.name_scope("Forward_Pass"):
         output, final_state = tf.nn.dynamic_rnn(multilayer_cell,
@@ -150,7 +152,7 @@ def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate,
             update_loss = 0
             batch_loss = 0
 
-            for batch_i, (x, y) in enumerate(utils.get_batches(X_train, y_train, batch_size)):
+            for batch_i, (x, y) in enumerate(utils.get_batches(X_train, y_train, batch_size, tokenizer.word2int)):
                 if batch_i == 1:
                     print("Starting")
                 feed = {graph.input_data: x,
@@ -217,6 +219,7 @@ def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate,
                 break
 
 def test(X_test, y_test):
+
     graph = train_graph
 
     with tf.Session(graph) as sess:
@@ -233,16 +236,15 @@ def test(X_test, y_test):
             for ii, x in enumerate(utils.get_test_batches(X_test, args.batch_size), 1):
                 if ii%100==0:
                     print("%d batches"%ii)
-                feed = {graph.input_data: x,
-                        graph.keep_prob: args,keep_prob,
-                        graph.initial_state: state}
+                feed = {graph.input_data: x, graph.keep_prob: args,keep_prob, graph.initial_state: state}
 
-                predictions = sess.run(graph.predictions, feed_dict=feed)
-                for i in range(len(predictions)):
-                    all_preds.append(predictions[i,:])
-    all_preds = np.array(all_preds)
-    print(all_preds.shape)
-    y_predictions = all_preds.argmax(axis=1)
+                test_preds = sess.run(graph.predictions, feed_dict=feed)
+
+                for i in range(len(test_preds)):
+                    all_preds.append(test_preds[i,:])
+
+    all_preds = np.asarray(all_preds)
+    y_predictions = np.argmax(all_preds, axis=1)
     y_true = y_test.argmax(axis=1)
     y_true = y_true[:len(y_predictions)]
 
@@ -251,8 +253,8 @@ def test(X_test, y_test):
     plt.title('Confusion Matrix Stars prediction')
     plt.figure(figsize=(12, 10))
 
-    test_correctPred = np.equal(y_predictions, y_true)
-    test_accuracy = np.mean(test_correctPred.astype(float))
+    test_correct_pred = np.equal(y_predictions, y_true)
+    test_accuracy = np.mean(test_correct_pred.astype(float))
 
     print(test_accuracy)
 
@@ -292,16 +294,17 @@ def main():
     df_balanced = pd.read_csv(args.file)
     ratings = df_balanced.stars.values.astype(int)
     ratings_cat = tf.keras.utils.to_categorical(ratings)
-    X_train, X_test, y_train, y_test = train_test_split(seq, ratings_cat, test_size=0.2, random_state=9)
+    x_train, x_test, y_train, y_test = train_test_split(seq, ratings_cat, test_size=0.2, random_state=9)
     if args.pickle:
         utils.pickle_files("./data/pickles/balanced_reviews.p", df_balanced)
         utils.pickle_files("./data/pickles/category_ratings.p", ratings_cat)
         utils.pickle_files("./data/pickles/word_embedding_matrix.p", word_embedding_matrix)
         utils.pickle_files("./data/pickles/tokenizer.p", tokenizer)
+
     if args.training:
-        train(X_train, y_train, args.batch_size, args.resume, args.keep_prob, args.learning_rate)
-        test(X_test, y_test)
+        train(x_train, y_train, args.batch_size, args.resume, args.keep_prob, args.learning_rate)
+        test(x_test, y_test)
     elif args.testing:
-        test(X_test, y_test)
+        test(x_test, y_test)
     elif args.predicting:
         predict()
