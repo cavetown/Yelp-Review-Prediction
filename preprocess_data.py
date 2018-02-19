@@ -13,6 +13,7 @@ parser.add_argument("-fb", "--file_bus", type=str, default='.data/dataset/busine
 parser.add_argument("-fr", "--file_rev", type=str, default='./data/dataset/review.json', help="Path to review json")
 parser.add_argument("-ds", "--download_stopwords", type=bool, default=True, help="Specify whether to download"
                                                                                  "NLTK stopwords")
+parser.add_argument("-s", "--save_file", type=str, default="balanced_reviews.csv", help="Specify file or path to save reviews to")
 args = parser.parse_args()
 
 
@@ -133,7 +134,7 @@ def main():
     df_reviews['len'] = df_reviews.text.str.len()
     df_reviews = df_reviews[df_reviews['len'].between(10, 4000)]
     df_balanced = balance_dataframe(df_reviews)
-    df_balanced.to_csv('balanced_reviews1000.csv', encoding='utf-8')
+    df_balanced.to_csv(args.save_file, encoding='utf-8')
     print("Done Processing %d reviews from %d" % (len(df_balanced['stars']), args.num_reviews))
 
 if __name__=="__main__":
