@@ -7,14 +7,9 @@ import numpy as np
 import pandas as pd
 from pandas_ml import ConfusionMatrix
 import seaborn
-import sklearn as sk
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import pickle
 import matplotlib.pyplot as plt
-import random
-from nltk.corpus import stopwords
-from collections import defaultdict
 from collections import namedtuple
 from tokenizer import Tokenizer
 import embedding_utils as emb_utils
