@@ -36,8 +36,10 @@ parser.add_argument("-r", "--resume", type=bool, default=True, help="Resume trai
 parser.add_argument("-lrd", "--learning_rate_decay", type=float, default=0.95, help="Fraction of LR to keep every time")
 parser.add_argument("-lr", "--learning_rate", type=float, default=0.005, help="Learning Rate")
 
+
 args = parser.parse_args()
 
+NUM_CLASSES = 6
 
 def model_inputs():
     # Should be [batch_size x review length]
@@ -48,8 +50,85 @@ def model_inputs():
     keep_prob = tf.placeholder(tf.float32, name='keep_prob')
     return input_data, labels, lr, keep_prob
 
+df_balanced = pd.read_csv(args.file)
+tokenizer = Tokenizer()
 
-def train(X_train, X_test, y_train, y_test, batch_size, rnn_size, word_embedding_matrix, num_layers, resume, keep_probability, learning_rate, display_step=20, update_check=500, num_classes=6):
+embeddings_index = emb_utils.load_embeddings(args.embedding_path)
+tokenizer.fit_on_texts(df_balanced.text, embeddings_index)
+
+word_embedding_matrix = emb_utils.create_embedding_matrix(tokenizer.word2int, embeddings_index, args.embedding_dim)
+seq = tokenizer.text_to_sequence(df_balanced['text'])
+
+# Creating graph for TensorFlow
+tf.reset_default_graph()
+train_graph = tf.Graph()
+with train_graph.as_default():
+    with tf.name_scope("inputs"):
+        input_data, labels, lr, keep_prob = model_inputs()
+        weight = tf.Variable(
+            tf.truncated_normal([args.hidden_units, NUM_CLASSES], stddev=(1 / np.sqrt(args.hidden_units * NUM_CLASSES))))
+        bias = tf.Variable(tf.constant(0.1, shape=[NUM_CLASSES]))
+
+    embeddings = word_embedding_matrix
+    embs = tf.nn.embedding_lookup(embeddings, input_data)
+
+    with tf.name_scope("RNN_Layers"):
+        stacked_rnn = []
+        for layer in range(args.num_layers):
+            cell_fw = tf.contrib.rnn.GRUCell(rnn_size)
+            cell_fw = tf.contrib.rnn.DropoutWrapper(cell_fw,
+                                                    output_keep_prob=keep_prob)
+            stacked_rnn.append(cell_fw)
+        multilayer_cell = tf.contrib.rnn.MultiRNNCell(stacked_rnn, state_is_tuple=True)
+
+    with tf.name_scope("init_state"):
+        initial_state = multilayer_cell.zero_state(batch_size, tf.float32)
+
+    with tf.name_scope("Forward_Pass"):
+        output, final_state = tf.nn.dynamic_rnn(multilayer_cell,
+                                                embs,
+                                                dtype=tf.float32)
+
+    with tf.name_scope("Predictions"):
+        last = output[:, -1, :]
+        predictions = tf.exp(tf.matmul(last, weight) + bias)
+        tf.summary.histogram('predictions', predictions)
+
+    with tf.name_scope('cost'):
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=predictions, labels=labels))
+        tf.summary.scalar('cost', cost)
+
+    # Optimizer
+    with tf.name_scope('train'):
+        optimizer = tf.train.AdamOptimizer(lr).minimize(cost)
+
+    # Predictions comes out as 6 output layer, so need to "change" to one hot
+    with tf.name_scope("accuracy"):
+        correctPred = tf.equal(tf.argmax(predictions, 1), tf.argmax(labels, 1))
+        accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
+        tf.summary.scalar('accuracy', accuracy)
+
+    export_nodes = ['input_data', 'labels', 'keep_prob', 'lr', 'initial_state', 'final_state',
+                    'accuracy', 'predictions', 'cost', 'optimizer', 'merged']
+
+    merged = tf.summary.merge_all()
+
+print("Graph is built.")
+graph_location = "./graph"
+
+Graph = namedtuple('train_graph', export_nodes)
+local_dict = locals()
+graph = Graph(*[local_dict[each] for each in export_nodes])
+
+print(graph_location)
+train_writer = tf.summary.FileWriter(graph_location)
+train_writer.add_graph(train_graph)
+
+
+
+
+
+def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
 
     epochs = args.epochs
     summary_update_loss = []
@@ -57,72 +136,7 @@ def train(X_train, X_test, y_train, y_test, batch_size, rnn_size, word_embedding
     stop_early = 0
     stop = 3
 
-    tf.reset_default_graph()
-    train_graph = tf.Graph()
-    with train_graph.as_default():
-        with tf.name_scope("inputs"):
-            input_data, labels, lr, keep_prob = model_inputs()
-            weight = tf.Variable(
-                tf.truncated_normal([rnn_size, num_classes], stddev=(1 / np.sqrt(rnn_size * num_classes))))
-            bias = tf.Variable(tf.constant(0.1, shape=[num_classes]))
-
-        embeddings = word_embedding_matrix
-        embs = tf.nn.embedding_lookup(embeddings, input_data)
-
-        with tf.name_scope("RNN_Layers"):
-            stacked_rnn = []
-            for layer in range(num_layers):
-                cell_fw = tf.contrib.rnn.GRUCell(rnn_size)
-                cell_fw = tf.contrib.rnn.DropoutWrapper(cell_fw,
-                                                        output_keep_prob=keep_prob)
-                stacked_rnn.append(cell_fw)
-            multilayer_cell = tf.contrib.rnn.MultiRNNCell(stacked_rnn, state_is_tuple=True)
-
-        with tf.name_scope("init_state"):
-            initial_state = multilayer_cell.zero_state(batch_size, tf.float32)
-
-        with tf.name_scope("Forward_Pass"):
-            output, final_state = tf.nn.dynamic_rnn(multilayer_cell,
-                                                    embs,
-                                                    dtype=tf.float32)
-
-        with tf.name_scope("Predictions"):
-            last = output[:, -1, :]
-            predictions = tf.exp(tf.matmul(last, weight) + bias)
-            tf.summary.histogram('predictions', predictions)
-
-        with tf.name_scope('cost'):
-            cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=predictions, labels=labels))
-            tf.summary.scalar('cost', cost)
-
-        # Optimizer
-        with tf.name_scope('train'):
-            optimizer = tf.train.AdamOptimizer(lr).minimize(cost)
-
-        # Predictions comes out as 6 output layer, so need to "change" to one hot
-        with tf.name_scope("accuracy"):
-            correctPred = tf.equal(tf.argmax(predictions, 1), tf.argmax(labels, 1))
-            accuracy = tf.reduce_mean(tf.cast(correctPred, tf.float32))
-            tf.summary.scalar('accuracy', accuracy)
-
-        export_nodes = ['input_data', 'labels', 'keep_prob', 'lr', 'initial_state', 'final_state',
-                        'accuracy', 'predictions', 'cost', 'optimizer', 'merged']
-
-        merged = tf.summary.merge_all()
-
-    print("Graph is built.")
-    graph_location = "./graph"
-
-    Graph = namedtuple('train_graph', export_nodes)
-    local_dict = locals()
-    graph = Graph(*[local_dict[each] for each in export_nodes])
-
-    print(graph_location)
-    train_writer = tf.summary.FileWriter(graph_location)
-    train_writer.add_graph(train_graph)
-
     checkpoint = "./saves/best_model.ckpt"
-
     with tf.Session(graph=train_graph) as sess:
         if resume:
             loader = tf.train.import_meta_graph("./" + checkpoint + '.meta')
@@ -205,18 +219,81 @@ def train(X_train, X_test, y_train, y_test, batch_size, rnn_size, word_embedding
                 break
 
 def test(X_test, y_test):
-    pass
+    graph = train_graph
 
+    with tf.Session(graph) as sess:
+        checkpoint = "./saves/best_model.ckpt"
+
+        all_preds = []
+
+        with tf.Session() as sess:
+            saver = tf.train.Saver()
+            # Load the model
+            saver.restore(sess, checkpoint)
+            state = sess.run(graph.initial_state)
+            print("Total Batches: %d"%(len(X_test)//args.batch_size))
+            for ii, x in enumerate(utils.get_test_batches(X_test, args.batch_size), 1):
+                if ii%100==0:
+                    print("%d batches"%ii)
+                feed = {graph.input_data: x,
+                        graph.keep_prob: args,keep_prob,
+                        graph.initial_state: state}
+
+                predictions = sess.run(graph.predictions, feed_dict=feed)
+                for i in range(len(predictions)):
+                    all_preds.append(predictions[i,:])
+    all_preds = np.array(all_preds)
+    print(all_preds.shape)
+    y_predictions = all_preds.argmax(axis=1)
+    y_true = y_test.argmax(axis=1)
+    y_true = y_true[:len(y_predictions)]
+
+    cm = ConfusionMatrix(y_true, y_predictions)
+    cm.plot(backend='seaborn', normalized=True)
+    plt.title('Confusion Matrix Stars prediction')
+    plt.figure(figsize=(12, 10))
+
+    test_correctPred = np.equal(y_predictions, y_true)
+    test_accuracy = np.mean(test_correctPred.astype(float))
+
+    print(test_accuracy)
+
+
+def predict():
+    load_files = True
+    if load_files == True:
+        word_embedding_matrix = utils.load_files("./data/pickles/word_embedding_matrix.p")
+        tokenizer = utils.load_files('./data/pickles/tokenizer.p')
+        word2int = tokenizer.word2int
+
+    pred_text = input("Please enter a review in english")
+    contractions = utils.get_contractions()
+    pred_text = utils.clean_text(pred_text)
+    pred_seq = tokenizer.text_to_sequence(pred_text, pred=True)
+    pred_seq = np.tile(pred_seq, (args.batch_size, 1))
+
+    with tf.Session(graph=train_graph) as sess:
+        checkpoint = "./saves/best_model.ckpt"
+        all_preds = []
+        with tf.Session() as sess:
+            saver = tf.train.Saver()
+            # Load the model
+            saver.restore(sess, checkpoint)
+            test_state = sess.run(graph.initial_state)
+            feed = {graph.input_data: pred_seq,
+                    graph.keep_prob: args.keep_prob,
+                    graph.initial_state: state}
+
+            predictions = sess.run(graph.predictions, feed_dict=feed)
+            for i in range(len(predictions)):
+                all_preds.append(predictions[i, :])
+    all_preds = np.array(all_preds)
+    y_predictions = all_preds.argmax(axis=1)
+    counts = np.bincount(y_predictions)
+    print("\nYou rated the restaurant: " + str(np.argmax(counts)) + " stars!")
 
 def main():
     df_balanced = pd.read_csv(args.file)
-    tokenizer = Tokenizer()
-
-    embeddings_index = emb_utils.load_embeddings(args.embedding_path)
-    tokenizer.fit_on_texts(df_balanced.text, embeddings_index)
-
-    word_embedding_matrix = emb_utils.create_embedding_matrix(tokenizer.word2int, embeddings_index, args.embedding_dim)
-    seq = tokenizer.text_to_sequence(df_balanced['text'])
     ratings = df_balanced.stars.values.astype(int)
     ratings_cat = tf.keras.utils.to_categorical(ratings)
     X_train, X_test, y_train, y_test = train_test_split(seq, ratings_cat, test_size=0.2, random_state=9)
@@ -226,6 +303,9 @@ def main():
         utils.pickle_files("./data/pickles/word_embedding_matrix.p", word_embedding_matrix)
         utils.pickle_files("./data/pickles/tokenizer.p", tokenizer)
     if args.training:
-        train(X_train, X_test, y_train, y_test, args.batch_size, args.hidden_units, word_embedding_matrix,
-              args.num_layers, args.resume, args.keep_prob, args.learning_rate)
+        train(X_train, y_train, args.batch_size, args.resume, args.keep_prob, args.learning_rate)
         test(X_test, y_test)
+    elif args.testing:
+        test(X_test, y_test)
+    elif args.predicting:
+        predict()
