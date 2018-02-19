@@ -6,7 +6,6 @@ import time
 import numpy as np
 import pandas as pd
 from pandas_ml import ConfusionMatrix
-import seaborn
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -15,9 +14,8 @@ from tokenizer import Tokenizer
 import embedding_utils as emb_utils
 import utilities as utils
 import argparse
-
+from contractions import get_contractions
 print('TensorFlow Version: {}'.format(tf.__version__))
-import os
 
 parser = argparse.ArgumentParser(description="Specify number of reviews to parse")
 parser.add_argument("-nl", "--num_layers", type=int, default=2, help="Specify number of layers for GRU RNN")
@@ -260,15 +258,13 @@ def test(X_test, y_test):
 
 
 def predict():
-    load_files = True
-    if load_files == True:
-        word_embedding_matrix = utils.load_files("./data/pickles/word_embedding_matrix.p")
-        tokenizer = utils.load_files('./data/pickles/tokenizer.p')
-        word2int = tokenizer.word2int
+    word_embedding_matrix = utils.load_files("./data/pickles/word_embedding_matrix.p")
+    tokenizer = utils.load_files('./data/pickles/tokenizer.p')
+    word2int = tokenizer.word2int
 
     pred_text = input("Please enter a review in english")
-    contractions = utils.get_contractions()
-    pred_text = utils.clean_text(pred_text)
+    contractions = get_contractions()
+    pred_text = utils.clean_text(pred_text, contractions)
     pred_seq = tokenizer.text_to_sequence(pred_text, pred=True)
     pred_seq = np.tile(pred_seq, (args.batch_size, 1))
 
@@ -279,7 +275,7 @@ def predict():
             saver = tf.train.Saver()
             # Load the model
             saver.restore(sess, checkpoint)
-            test_state = sess.run(graph.initial_state)
+            state = sess.run(graph.initial_state)
             feed = {graph.input_data: pred_seq,
                     graph.keep_prob: args.keep_prob,
                     graph.initial_state: state}
@@ -287,8 +283,8 @@ def predict():
             predictions = sess.run(graph.predictions, feed_dict=feed)
             for i in range(len(predictions)):
                 all_preds.append(predictions[i, :])
-    all_preds = np.array(all_preds)
-    y_predictions = all_preds.argmax(axis=1)
+    all_preds = np.asarray(all_preds)
+    y_predictions = np.argmax(all_preds, axis=1)
     counts = np.bincount(y_predictions)
     print("\nYou rated the restaurant: " + str(np.argmax(counts)) + " stars!")
 
