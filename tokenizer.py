@@ -1,17 +1,17 @@
 class Tokenizer():
-    ''' Create a tokenizer class that will parse the texts until integers'''
+    """ Create a tokenizer class that will parse the texts until integers"""
     def __init__(self, threshold=20):
         self.word2int = {}
         self.threshold = threshold
         self.word_counts = {}
 
     def _count_words(self, text):
-        '''
+        """
         Count the number of words and is a helper function used in fit_on_texts
         :param text: list of strings to count the words
         :type text: list(str)
         :return: None
-        '''
+        """
         for sentence in text:
             for word in sentence.split():
                 if word not in self.word_counts:
@@ -21,7 +21,7 @@ class Tokenizer():
         print("Size of Vocabulary: ", len(self.word_counts))
 
     def fit_on_texts(self, texts, embeddings_index):
-        '''
+        """
         Function fits the tokenizer class based on what's available in embeddings index. It'll set the
         classes own word count as well.
 
@@ -29,7 +29,7 @@ class Tokenizer():
         :type texts: list
         :param embeddings_index: Dictionary of words from reviews mapping to an embedding vector from embeddings used
         :type embeddings_index: dict
-        '''
+        """
 
         self._count_words(texts)
         token_index = 0
@@ -47,7 +47,7 @@ class Tokenizer():
         print("Percent of words we will use: {}%".format(usage_ratio))
 
     def text_to_sequence(self, text, pred=False):
-        '''
+        """
         Function to convert a text input into tokenized list.
 
         :param text: List of lists of reviews to be tokenized
@@ -57,7 +57,7 @@ class Tokenizer():
         :type pred: bool
         :return: List of lists with each word converted to its tokenized integer
         :rtype: list
-        '''
+        """
         if pred:
             seq = []
             for word in text.split():
