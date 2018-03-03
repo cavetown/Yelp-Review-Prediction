@@ -28,28 +28,26 @@ parser.add_argument("-sl", "--max_sequence_length", type=int, default=750, help=
 parser.add_argument("-ep", "--embedding_path", type=str, default='./embeddings/numberbatch-en.txt', help="Path to embedding matrix")
 parser.add_argument("-f", "--file", type=str, default="./balanced_reviews.csv", help="Path to csv of preprocessed data")
 parser.add_argument("-ed", "--embedding_dim", type=int, default=300, help="Number of dimensions for your embedding matrix")
-parser.add_argument("-v", "--val_split", type=float, defualt=0.2, help="Amount of data to use for validation")
+parser.add_argument("-v", "--val_split", type=float, default=0.2, help="Amount of data to use for validation")
 parser.add_argument("-p", "--pickle", type=bool, default=True, help="Specify whether to pickle files")
 parser.add_argument("-r", "--resume", type=bool, default=True, help="Resume training")
 parser.add_argument("-lrd", "--learning_rate_decay", type=float, default=0.95, help="Fraction of LR to keep every time")
 parser.add_argument("-lr", "--learning_rate", type=float, default=0.005, help="Learning Rate")
-
-
+parser.add_argument("-s", "--shuffle", type=str, default='false', help="shuffle data after each epoch")
 args = parser.parse_args()
 
 NUM_CLASSES = 6
 
+
 def model_inputs():
     # Should be [batch_size x review length]
     input_data = tf.placeholder(tf.int32, [None, None], name='input')
-
     # Should be [batch_size x num_classes]
-
     labels = tf.placeholder(tf.int32, [None, None], name='labels')
-
     lr = tf.placeholder(tf.float32, name='learning_rate')
     keep_prob = tf.placeholder(tf.float32, name='keep_prob')
     return input_data, labels, lr, keep_prob
+
 
 df_balanced = pd.read_csv(args.file)
 tokenizer = Tokenizer()
@@ -126,7 +124,7 @@ train_writer = tf.summary.FileWriter(graph_location)
 train_writer.add_graph(train_graph)
 
 
-def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
+def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
 
     epochs = args.epochs
     summary_update_loss = []
@@ -150,7 +148,7 @@ def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate,
             update_loss = 0
             batch_loss = 0
 
-            for batch_i, (x, y) in enumerate(utils.get_batches(X_train, y_train, batch_size, tokenizer.word2int)):
+            for batch_i, (x, y) in enumerate(utils.get_batches(x_train, y_train, batch_size, tokenizer.word2int)):
                 if batch_i == 1:
                     print("Starting")
                 feed = {graph.input_data: x,
@@ -180,7 +178,7 @@ def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate,
                           .format(epoch_i,
                                   epochs,
                                   batch_i,
-                                  len(X_train) // batch_size,
+                                  len(x_train) // batch_size,
                                   batch_loss / display_step,
                                   acc,
                                   batch_time * display_step))
@@ -211,35 +209,33 @@ def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate,
             # Set shuffle to True if you want to shuffle data between epochs
             # This can add some randomness and potentially learn new patterns in data
             #             if shuffle:
-            #                 X_train, y_train = shuffle_data(X_train, y_train)
+            #                 x_train, y_train = shuffle_data(x_train, y_train)
             if stop_early == stop:
                 print("Stopping Training.")
                 break
 
-def test(X_test, y_test):
-
-    graph = train_graph
-
-    with tf.Session(graph) as sess:
+def test(x_test, y_test):
+    with tf.Session(graph=train_graph) as sess:
         checkpoint = "./saves/best_model.ckpt"
-
         all_preds = []
 
-        with tf.Session() as sess:
-            saver = tf.train.Saver()
-            # Load the model
-            saver.restore(sess, checkpoint)
-            state = sess.run(graph.initial_state)
-            print("Total Batches: %d"%(len(X_test)//args.batch_size))
-            for ii, x in enumerate(utils.get_test_batches(X_test, args.batch_size), 1):
-                if ii%100==0:
-                    print("%d batches"%ii)
-                feed = {graph.input_data: x, graph.keep_prob: args,keep_prob, graph.initial_state: state}
+        # with tf.Session() as sess:
+        saver = tf.train.Saver()
+        # Load the model
+        saver.restore(sess, checkpoint)
+        state = sess.run(graph.initial_state)
+        print("Total Batches: %d" % (len(x_test)//args.batch_size))
+        for ii, x in enumerate(utils.get_test_batches(x_test, args.batch_size), 1):
+            if ii % 100 == 0:
+                print("%d batches" % ii)
+            feed = {graph.input_data: x,
+                    graph.keep_prob: args.keep_prob,
+                    graph.initial_state: state}
 
-                test_preds = sess.run(graph.predictions, feed_dict=feed)
+            test_preds = sess.run(graph.predictions, feed_dict=feed)
 
-                for i in range(len(test_preds)):
-                    all_preds.append(test_preds[i,:])
+            for i in range(len(test_preds)):
+                all_preds.append(test_preds[i,:])
 
     all_preds = np.asarray(all_preds)
     y_predictions = np.argmax(all_preds, axis=1)
@@ -258,10 +254,6 @@ def test(X_test, y_test):
 
 
 def predict():
-    word_embedding_matrix = utils.load_files("./data/pickles/word_embedding_matrix.p")
-    tokenizer = utils.load_files('./data/pickles/tokenizer.p')
-    word2int = tokenizer.word2int
-
     pred_text = input("Please enter a review in english")
     contractions = get_contractions()
     pred_text = utils.clean_text(pred_text, contractions)
@@ -271,18 +263,18 @@ def predict():
     with tf.Session(graph=train_graph) as sess:
         checkpoint = "./saves/best_model.ckpt"
         all_preds = []
-        with tf.Session() as sess:
-            saver = tf.train.Saver()
-            # Load the model
-            saver.restore(sess, checkpoint)
-            state = sess.run(graph.initial_state)
-            feed = {graph.input_data: pred_seq,
-                    graph.keep_prob: args.keep_prob,
-                    graph.initial_state: state}
+        # with tf.Session() as sess:
+        saver = tf.train.Saver()
+        # Load the model
+        saver.restore(sess, checkpoint)
+        state = sess.run(graph.initial_state)
+        feed = {graph.input_data: pred_seq,
+                graph.keep_prob: args.keep_prob,
+                graph.initial_state: state}
 
-            predictions = sess.run(graph.predictions, feed_dict=feed)
-            for i in range(len(predictions)):
-                all_preds.append(predictions[i, :])
+        preds = sess.run(graph.predictions, feed_dict=feed)
+        for i in range(len(preds)):
+            all_preds.append(preds[i, :])
     all_preds = np.asarray(all_preds)
     y_predictions = np.argmax(all_preds, axis=1)
     counts = np.bincount(y_predictions)
