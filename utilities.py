@@ -6,25 +6,25 @@ from nltk.corpus import stopwords
 
 
 def pickle_files(filename, stuff):
-    '''
+    """
     Saves files to be used later
     :param filename: name to called pickled file
     :type filename: str
     :param stuff: file to pickle
     :return: None
-    '''
+    """
     save_stuff = open(filename, "wb")
     pickle.dump(stuff, save_stuff)
     save_stuff.close()
 
 
 def load_files(filename):
-    '''
+    """
     Loads a pickles file
     :param filename: file to load
     :type filename: str
     :return: Loaded file
-    '''
+    """
     saved_stuff = open(filename,"rb")
     stuff = pickle.load(saved_stuff)
     saved_stuff.close()
@@ -32,7 +32,7 @@ def load_files(filename):
 
 
 def clean_text(text, contractions):
-    '''
+    """
     Method to clean up text by removing stopwords, splitting, removing punctuation, and none usable
     characters
 
@@ -42,7 +42,7 @@ def clean_text(text, contractions):
     :type contractions: dict
     :return: text as a list
     :rtype: list
-    '''
+    """
     text = text.lower()    
     if True:
         text = text.split()
@@ -68,7 +68,7 @@ def clean_text(text, contractions):
 
 
 def pad_batch(batch, word2int):
-    '''
+    """
     Pad the batch so that they are all of equal length to be fed into the network
 
     :param batch: Batch to pad
@@ -77,7 +77,7 @@ def pad_batch(batch, word2int):
     :type word2int: dict
     :return:padded text
     :rtype: list
-    '''
+    """
     # Want to pad this way since tensorflow preprocessing pads with 0's, which can eventually lead to zero tensors
     lengths = []
     for text in batch:
@@ -91,7 +91,7 @@ def pad_batch(batch, word2int):
 
 
 def get_batches(x, y, batch_size, word2int):
-    '''
+    """
     Getter function for grabbing training batches to be input into the network
     :param x: type list. List of list of reviews to grab from
     :type x: list
@@ -99,7 +99,7 @@ def get_batches(x, y, batch_size, word2int):
     :type y: list
     :param batch_size: amount of data to feed
     :return: yields training batch reviews with their labels
-    '''
+    """
     # Make sure to not exceed amount of data
     for batch_i in range(0, len(x)//batch_size):
         start = batch_i * batch_size
@@ -111,11 +111,11 @@ def get_batches(x, y, batch_size, word2int):
 
 
 def get_test_batches(x, batch_size):
-    '''
+    """
     :param x: type list. Train input data to be parsed into batches
     :param batch_size: Batch size hyperparameter
     :return: Yields a test batch for input to neural network
-    '''
+    """
 
     for batch_i in range(0, len(x)//batch_size):
         start = batch_i * batch_size
