@@ -13,3 +13,37 @@ On Yelp, a restaurant can have over hundreds of reviews, and it is difficult for
 ## Usage
 The main file to run is tf_rnn_yelp.ipynb for training. It is a jupyter notebook file so it will require jupyter installed. 
 The file is self sustained and the only things required to run are the datasets and embedding (which there is a link for in the markdowns). Markdowns inside the notebook explain each procedure and what it is accomplishing along with variables easily modifiable.
+### Python Files
+1. Ensure that all requirements and dependencies are installed
+``` 
+pip install -r requirements.txt
+```
+2. Run preprocessing file to process reviews
+```
+python preprocess_data.py -n=int -fb=str -fr=str -ds=bool -s=str
+```
+-n, --num_reviews: amount of reviews to process
+-fb, --file_bus: path to business json file from Yelp dataset
+-fr, --file_rev: path to review jason file from Yelp dataset
+-ds, --download_stopwords: download NLTK stopwords if they aren't downloaded already
+-s, --save_file: where to save the preprocessed data as a csv file
+
+3. Run predict_ratings.py
+```
+python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=str -f=str -ed=int -v=float -p=str -r=str -lrd=float -lr=float -s=str
+```
+-nl, --num_layers: specify layers for network
+-bz, --batch_size: how much data to feed in per time
+-e, --epochs: total epochs to train for
+-hu, --hidden_units: hidden size of GRU
+-t, --task: 'train', 'test', or 'predict'
+-kp, --keep_prob: how much to keep during dropout
+-ep, --embedding_path: path to embeddings used
+-f, --file: path to CSV from preprocess
+-ed, --embedding_dim: dimension of embedding matrix
+-v, --val_split: how much data to split into test (validation) set
+-p, --pickle: specify whether to pickle files used
+-r, --resume: resume a pretrained model
+-lrd, --learning_rate_decay: how much to anneal learning rate
+-lr, --learning_rate: learning rate to use
+-s, --shuffle: whether to shuffle data after every spoch
