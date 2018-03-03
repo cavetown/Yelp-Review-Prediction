@@ -63,7 +63,7 @@ def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dat
                 k += 1
                 # Notify for every 5000 reviews
                 if len(revs_list) % 5000 == 0:
-                    print(len(revs_list), k)
+                    print("Currently processed %d reviews" % len(revs_list))
         except ValueError:
             nolang.append(text)
             print("Detected text with no language! Now at: %d" % len(nolang))
