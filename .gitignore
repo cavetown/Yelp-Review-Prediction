@@ -14,3 +14,4 @@ saves/best_model_100k.ckpt.meta
 saves/best_model_50k.ckpt.data-00000-of-00001
 saves/best_model_50k.ckpt.index
 saves/best_model_50k.ckpt.meta
+.ipynb_checkpoints
