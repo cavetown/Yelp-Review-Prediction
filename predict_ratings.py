@@ -276,7 +276,7 @@ def test(x_test, y_test):
     all_preds = np.asarray(all_preds)
     y_predictions = np.argmax(all_preds, axis=1)
     y_true = y_test.argmax(axis=1)
-    y_true = y_true[:len(y_predictions)]
+    y_true = y_true[:y_predictions.shape[0]]
 
     cm = ConfusionMatrix(y_true, y_predictions)
     cm.plot(backend='seaborn', normalized=True)
@@ -318,7 +318,6 @@ def predict():
 
 
 def main():
-    df_balanced = pd.read_csv(args.file)
     ratings = df_balanced.stars.values.astype(int)
     ratings_cat = tf.keras.utils.to_categorical(ratings)
     x_train, x_test, y_train, y_test = train_test_split(seq, ratings_cat, test_size=0.2, random_state=9)
@@ -335,6 +334,7 @@ def main():
         test(x_test, y_test)
     elif args.task== 'predict':
         predict()
+
 
 if __name__ == "__main__":
     main()
