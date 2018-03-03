@@ -332,7 +332,7 @@ def main():
         # test(x_test, y_test)
     elif args.task == 'test':
         test(x_test, y_test)
-    elif args.task== 'predict':
+    elif args.task == 'predict':
         predict()
 
 
