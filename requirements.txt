@@ -1,0 +1,12 @@
+# Libraries required to run our code
+nltk
+numpy
+langdetect
+sklearn
+pandas
+tensorflow
+keras
+seaborn
+pandas_ml
+PyTables
+matplotlib
