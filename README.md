@@ -46,5 +46,5 @@ python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=st
 -r, --resume: resume a pretrained model  
 -lrd, --learning_rate_decay: how much to anneal learning rate  
 -lr, --learning_rate: learning rate to use  
--s, --shuffle: whether to shuffle data after every spoch  
+-s, --shuffle: whether to shuffle data after every epoch  
 -uc, --update_check: how often to check current loss and to save model
