@@ -3,6 +3,11 @@ import numpy as np
 
 def load_embeddings(path='./embeddings/numberbatch-en.txt'):
     ''' Function to initialize embeddings and assign words in embeddings to specific value
+
+    :param path: path to embedding file
+    :type path: str
+    :return: embeddings index, a dictionary to map to embedding vector
+    :rtype: dict
     '''
     embeddings_index = {}
     with open(path, 'r') as f: # encoding='utf-8'
@@ -13,14 +18,20 @@ def load_embeddings(path='./embeddings/numberbatch-en.txt'):
             embeddings_index[word] = embedding
     return embeddings_index
 
+
 def create_embedding_matrix(word2int, embeddings_index, embedding_dim=300):
     '''
     Function creates am embedding matrix based off of whats contained in reviews versus embeddings
     :param word2int: Dictionary of words mapped to values from tokenizer
+    :type word2int: dict
     :param embeddings_index: Dictionary of word mapped to embedding vector
+    :type embeddings_index: dict
     :param embedding_dim: Dimension of the embedding matrix used. Default is 300 since CN Embedding matrix used
-    :return:
+    :type embedding_dim: int
+    :return: embedding matrix
+    :rtype: numpy.ndarray
     '''
+
     assert isinstance(word2int, dict)
     assert isinstance(embeddings_index, dict)
 
@@ -36,6 +47,5 @@ def create_embedding_matrix(word2int, embeddings_index, embedding_dim=300):
             new_embedding = np.array(np.random.uniform(-1.0, 1.0, embedding_dim))
             embeddings_index[word] = new_embedding
             word_embedding_matrix[i] = new_embedding
-
-    print(len(word_embedding_matrix), len(word2int))
+    print("Length Embedding Matrix: %d\tLength Word2Int: %d" % (len(word_embedding_matrix), len(word2int)))
     return word_embedding_matrix
