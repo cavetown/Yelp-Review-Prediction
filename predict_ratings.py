@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(description="Specify number of reviews to parse
 parser.add_argument("-nl", "--num_layers", type=int, default=2, help="Specify number of layers for GRU RNN")
 parser.add_argument("-bz", "--batch_size", type=int, default=64, help="Batch size to train network")
 parser.add_argument("-e", "--epochs", type=int, default=5, help="number of epochs to train")
-parser.add_argument("-hu", "--hidden_units", type=int, default=64, help="Pnumber of hidden units for the network")
+parser.add_argument("-hu", "--hidden_units", type=int, default=64, help="number of hidden units for the network")
 parser.add_argument("-t", "--training", type=bool, default=True, help="Specify whether to train the network")
 parser.add_argument("-kp", "--keep_prob", type=float, default=0.8, help="amount to keep during dropout")
 parser.add_argument("-sl", "--max_sequence_length", type=int, default=750, help="Max length of a sequence to be trained")
@@ -44,6 +44,7 @@ def model_inputs():
     input_data = tf.placeholder(tf.int32, [None, None], name='input')
 
     # Should be [batch_size x num_classes]
+
     labels = tf.placeholder(tf.int32, [None, None], name='labels')
 
     lr = tf.placeholder(tf.float32, name='learning_rate')
@@ -123,9 +124,6 @@ graph = Graph(*[local_dict[each] for each in export_nodes])
 print(graph_location)
 train_writer = tf.summary.FileWriter(graph_location)
 train_writer.add_graph(train_graph)
-
-
-
 
 
 def train(X_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
