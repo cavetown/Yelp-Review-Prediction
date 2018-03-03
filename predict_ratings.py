@@ -27,15 +27,19 @@ parser.add_argument("-t", "--task", type=str, default='train',
                     help="Specify whether to train the network, predict, or  test")
 parser.add_argument("-kp", "--keep_prob", type=float, default=0.8, help="amount to keep during dropout")
 parser.add_argument("-sl", "--max_sequence_length", type=int, default=750, help="Max length of a sequence to be trained")
-parser.add_argument("-ep", "--embedding_path", type=str, default='./embeddings/numberbatch-en.txt', help="Path to embedding matrix")
+parser.add_argument("-ep", "--embedding_path", type=str, default='./embeddings/numberbatch-en.txt',
+                    help="Path to embedding matrix")
 parser.add_argument("-f", "--file", type=str, default="./balanced_reviews.csv", help="Path to csv of preprocessed data")
-parser.add_argument("-ed", "--embedding_dim", type=int, default=300, help="Number of dimensions for your embedding matrix")
+parser.add_argument("-ed", "--embedding_dim", type=int, default=300,
+                    help="Number of dimensions for your embedding matrix")
 parser.add_argument("-v", "--val_split", type=float, default=0.2, help="Amount of data to use for validation")
 parser.add_argument("-p", "--pickle", type=str, default='true', help="Specify whether to pickle files")
 parser.add_argument("-r", "--resume", type=str, default='false', help="Resume training")
 parser.add_argument("-lrd", "--learning_rate_decay", type=float, default=0.95, help="Fraction of LR to keep every time")
 parser.add_argument("-lr", "--learning_rate", type=float, default=0.005, help="Learning Rate")
 parser.add_argument("-s", "--shuffle", type=str, default='false', help="shuffle data after each epoch")
+parser.add_argument("-uc", "--update_check", type=int, default=500,
+                    help="how many batches to check for updates in training")
 args = parser.parse_args()
 
 NUM_CLASSES = 6
@@ -328,7 +332,7 @@ def main():
         utils.pickle_files("./data/pickles/tokenizer.p", tokenizer)
 
     if args.task == 'train':
-        train(x_train, y_train, args.batch_size, args.keep_prob, args.learning_rate)
+        train(x_train, y_train, args.batch_size, args.keep_prob, args.learning_rate, update_check=args.update_check)
         # test(x_test, y_test)
     elif args.task == 'test':
         test(x_test, y_test)
