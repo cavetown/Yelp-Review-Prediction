@@ -1,12 +1,12 @@
-# Libraries required to run our code
+# Libraries required to run code
 nltk
 numpy
 langdetect
 sklearn
 pandas
 tensorflow
-keras
 seaborn
 pandas_ml
-PyTables
+tables
 matplotlib
+scipy
