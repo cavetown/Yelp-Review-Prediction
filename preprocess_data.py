@@ -5,10 +5,11 @@ from contractions import get_contractions
 import argparse
 import numpy as np
 import pandas as pd
+import nltk
 
 parser = argparse.ArgumentParser(description="Specify number of reviews to parse")
 parser.add_argument("-n", "--num_reviews", type=int, default=100000, help="Specify batch size for network")
-parser.add_argument("-fb", "--file_bus", type=str, default='.data/dataset/business.json', help="Path to business json")
+parser.add_argument("-fb", "--file_bus", type=str, default='./data/dataset/business.json', help="Path to business json")
 parser.add_argument("-fr", "--file_rev", type=str, default='./data/dataset/review.json', help="Path to review json")
 parser.add_argument("-ds", "--download_stopwords", type=bool, default=True, help="Specify whether to download"
                                                                                  "NLTK stopwords")
