@@ -22,7 +22,7 @@ parser.add_argument("-nl", "--num_layers", type=int, default=2, help="Specify nu
 parser.add_argument("-bz", "--batch_size", type=int, default=64, help="Batch size to train network")
 parser.add_argument("-e", "--epochs", type=int, default=5, help="number of epochs to train")
 parser.add_argument("-hu", "--hidden_units", type=int, default=64, help="number of hidden units for the network")
-parser.add_argument("-t", "--task", type=bool, default='train',
+parser.add_argument("-t", "--task", type=str, default='train',
                     help="Specify whether to train the network, predict, or  test")
 parser.add_argument("-kp", "--keep_prob", type=float, default=0.8, help="amount to keep during dropout")
 parser.add_argument("-sl", "--max_sequence_length", type=int, default=750, help="Max length of a sequence to be trained")
@@ -42,18 +42,21 @@ NUM_CLASSES = 6
 
 def model_inputs():
     # Should be [batch_size x review length]
-    input_data = tf.placeholder(tf.int32, [None, None], name='input')
+    inp = tf.placeholder(tf.int32, [None, None], name='input')
     # Should be [batch_size x num_classes]
-    labels = tf.placeholder(tf.int32, [None, None], name='labels')
-    lr = tf.placeholder(tf.float32, name='learning_rate')
-    keep_prob = tf.placeholder(tf.float32, name='keep_prob')
-    return input_data, labels, lr, keep_prob
+    target = tf.placeholder(tf.int32, [None, None], name='labels')
+    learning_rate = tf.placeholder(tf.float32, name='learning_rate')
+    keep_probability = tf.placeholder(tf.float32, name='keep_prob')
+    return inp, target, learning_rate, keep_probability
 
 
+# Load main dataframe
 df_balanced = pd.read_csv(args.file)
+# Load tokenizer class
 tokenizer = Tokenizer()
-
+# Load Embeddings matrix
 embeddings_index = emb_utils.load_embeddings(args.embedding_path)
+# Have tokenizer fit to our data
 tokenizer.fit_on_texts(df_balanced.text, embeddings_index)
 
 word_embedding_matrix = emb_utils.create_embedding_matrix(tokenizer.word2int, embeddings_index, args.embedding_dim)
@@ -125,8 +128,8 @@ train_writer = tf.summary.FileWriter(graph_location)
 train_writer.add_graph(train_graph)
 
 
-def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
-    '''
+def train(x_train, y_train, batch_size, keep_probability, learning_rate, display_step=20, update_check=500):
+    """
     Main train file to run the code. It will take in the parameters and train the network and then save the model
     every some iterations.
 
@@ -136,8 +139,6 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
     :type y_train: list
     :param batch_size: How large of a set of inputs to feed into network
     :type batch_size: int
-    :param resume: Whether there exists a model and to use that one for training
-    :type resume: bool
     :param keep_probability: How much of dropout to use
     :type keep_probability: float
     :param learning_rate: Learning rate for the network
@@ -147,17 +148,16 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
     :param update_check: How often to check to save model (number of times per epoch)
     :type update_check: int
     :return: None
-    '''
-
+    """
+    print("Training Now")
     epochs = args.epochs
     summary_update_loss = []
     min_learning_rate = 0.0005
     stop_early = 0
     stop = 3
-
     checkpoint = "./saves/best_model.ckpt"
     with tf.Session(graph=train_graph) as sess:
-        if resume:
+        if args.resume == 'true':
             loader = tf.train.import_meta_graph("./" + checkpoint + '.meta')
             loader.restore(sess, checkpoint)
         else:
@@ -172,7 +172,7 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
             batch_loss = 0
 
             for batch_i, (x, y) in enumerate(utils.get_batches(x_train, y_train, batch_size, tokenizer.word2int)):
-                if batch_i == 1:
+                if batch_i == 1 and epoch_i == 1:
                     print("Starting")
                 feed = {graph.input_data: x,
                         graph.labels: y,
@@ -186,7 +186,7 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
                                                          graph.final_state,
                                                          graph.optimizer],
                                                         feed_dict=feed)
-                if batch_i == 1:
+                if batch_i == 1 and epoch_i == 1:
                     print("Finished first")
 
                 train_writer.add_summary(summary, epoch_i * batch_i + batch_i)
@@ -236,10 +236,11 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
             if stop_early == stop:
                 print("Stopping Training.")
                 break
+    print("Done Training")
 
 
 def test(x_test, y_test):
-    '''
+    """
     Tests the network to see how well the network has trained
 
     :param x_test: input to the test function
@@ -247,7 +248,8 @@ def test(x_test, y_test):
     :param y_test: labels for the test function
     :type y_test: list
     :return: None
-    '''
+    """
+    print("Testing Now")
     with tf.Session(graph=train_graph) as sess:
         checkpoint = "./saves/best_model.ckpt"
         all_preds = []
@@ -325,10 +327,13 @@ def main():
         utils.pickle_files("./data/pickles/word_embedding_matrix.p", word_embedding_matrix)
         utils.pickle_files("./data/pickles/tokenizer.p", tokenizer)
 
-    if args.task.lower() == 'train':
-        train(x_train, y_train, args.batch_size, args.resume, args.keep_prob, args.learning_rate)
+    if args.task == 'train':
+        train(x_train, y_train, args.batch_size, args.keep_prob, args.learning_rate)
+        # test(x_test, y_test)
+    elif args.task == 'test':
         test(x_test, y_test)
-    elif args.task.lower() == 'test':
-        test(x_test, y_test)
-    elif args.task.lower() == 'predict':
+    elif args.task== 'predict':
         predict()
+
+if __name__ == "__main__":
+    main()

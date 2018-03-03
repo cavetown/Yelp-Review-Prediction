@@ -13,18 +13,19 @@ parser.add_argument("-fb", "--file_bus", type=str, default='./data/dataset/busin
 parser.add_argument("-fr", "--file_rev", type=str, default='./data/dataset/review.json', help="Path to review json")
 parser.add_argument("-ds", "--download_stopwords", type=bool, default=True, help="Specify whether to download"
                                                                                  "NLTK stopwords")
-parser.add_argument("-s", "--save_file", type=str, default="balanced_reviews.csv", help="Specify file or path to save reviews to")
+parser.add_argument("-s", "--save_file", type=str, default="balanced_reviews.csv",
+                    help="Specify file or path to save reviews to")
 args = parser.parse_args()
 
 
 def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dataset/review.json'):
-    '''
+    """
     Function will initialize the review preprocessing pipeline. It will expand contractions of text
     and then perform text cleaning
     :param bus_file: Type string, path to business json file
     :param rev_file: Type string, path to reviews json file
     :return:
-    '''
+    """
     assert isinstance(bus_file, str)
     assert isinstance(rev_file, str)
 
@@ -49,9 +50,9 @@ def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dat
         star = data['stars']
         ID = data['business_id']
         # Check language
-        if text == None:
+        if text is None:
             continue
-        if star == None:
+        if star is None:
             continue
         if ID not in restId:
             continue
@@ -63,19 +64,20 @@ def process_reviews(bus_file='.data/dataset/business.json', rev_file='./data/dat
                 # Notify for every 5000 reviews
                 if len(revs_list) % 5000 == 0:
                     print(len(revs_list), k)
-        except:
+        except ValueError:
             nolang.append(text)
+            print("Detected text with no language! Now at: %d" % len(nolang))
     print("Length of Reviews:\t" + str(len(revs_list)) + "Length of Stars:\t" +  str(len(stars_list)))
     return revs_list, stars_list
 
 
 def drop_missing_data(df_reviews):
-    '''
+    """
     Helper function that will get rid of missing or incomplete or unusable data.
     This could include star ratings that aren't numeric, or without values or not within the specified range of 1-5
     :param df_reviews: Dataframe with categories 'stars' and 'text'
     :return: Dataframe with dropped values
-    '''
+    """
     print("Dropping Missing Data\n")
     df_reviews = df_reviews[np.isfinite(df_reviews['stars'])]
     df_reviews = df_reviews[np.isfinite(df_reviews['stars'])]
@@ -85,12 +87,13 @@ def drop_missing_data(df_reviews):
 
 
 def convert_to_dataframe(revs_list, stars_list):
-    '''
+    """
     Helper function to convert the reviews and stars into a dataframe which can be easily managed and converted to csv
     :param revs_list: List of lists with each list containing the text review for restaurants
     :param stars_list: List of values with each value being a star rating for a review
     :return: Dataframe containing all reviews and stars in separate categorical columns
-    '''
+    """
+
     assert isinstance(revs_list, list)
     assert isinstance(stars_list, list)
 
@@ -126,6 +129,7 @@ def balance_dataframe(df, category=['stars']):
 
     return df
 
+
 def main():
     if args.download_stopwords:
         nltk.download('stopwords')
@@ -137,5 +141,6 @@ def main():
     df_balanced.to_csv(args.save_file, encoding='utf-8')
     print("Done Processing %d reviews from %d" % (len(df_balanced['stars']), args.num_reviews))
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()
