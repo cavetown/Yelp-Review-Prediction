@@ -110,10 +110,14 @@ def get_batches(x, y, batch_size, word2int):
         yield pad_batch_x, labels
 
 
-def get_test_batches(x, batch_size):
+def get_test_batches(x, batch_size, word2int):
     """
     :param x: type list. Train input data to be parsed into batches
+    :type x: list
     :param batch_size: Batch size hyperparameter
+    :type batch_size: int
+    :param word2int: tokenizing dictionary
+    :type word2int: dict
     :return: Yields a test batch for input to neural network
     """
 
@@ -121,5 +125,5 @@ def get_test_batches(x, batch_size):
         start = batch_i * batch_size
         end = start+batch_size
         batch = x[start:end]
-        pad_batch_test = np.array(pad_batch(batch))
+        pad_batch_test = np.asarray(pad_batch(batch, word2int))
         yield pad_batch_test

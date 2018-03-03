@@ -265,7 +265,7 @@ def test(x_test, y_test):
         saver.restore(sess, checkpoint)
         state = sess.run(graph.initial_state)
         print("Total Batches: %d" % (len(x_test)//args.batch_size))
-        for ii, x in enumerate(utils.get_test_batches(x_test, args.batch_size), 1):
+        for ii, x in enumerate(utils.get_test_batches(x_test, args.batch_size, tokenizer.word2int), 1):
             if ii % 100 == 0:
                 print("%d batches" % ii)
             feed = {graph.input_data: x,
@@ -294,7 +294,7 @@ def test(x_test, y_test):
 
 
 def predict():
-    pred_text = input("Please enter a review in english")
+    pred_text = input("Please enter a review in english: ")
     contractions = get_contractions()
     pred_text = utils.clean_text(pred_text, contractions)
     pred_seq = tokenizer.text_to_sequence(pred_text, pred=True)
@@ -333,7 +333,7 @@ def main():
 
     if args.task == 'train':
         train(x_train, y_train, args.batch_size, args.keep_prob, args.learning_rate, update_check=args.update_check)
-        # test(x_test, y_test)
+        test(x_test, y_test)
     elif args.task == 'test':
         test(x_test, y_test)
     elif args.task == 'predict':
