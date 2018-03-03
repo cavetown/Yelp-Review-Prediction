@@ -15,6 +15,7 @@ import embedding_utils as emb_utils
 import utilities as utils
 import argparse
 from contractions import get_contractions
+# Working with TensorFlow v1.6
 print('TensorFlow Version: {}'.format(tf.__version__))
 
 parser = argparse.ArgumentParser(description="Specify number of reviews to parse")
