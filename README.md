@@ -30,7 +30,7 @@ python preprocess_data.py -n=int -fb=str -fr=str -ds=bool -s=str
 
 3. Run predict_ratings.py
 ```
-python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=str -f=str -ed=int -v=float -p=str -r=str -lrd=float -lr=float -s=str
+python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=str -f=str -ed=int -v=float -p=str -r=str -lrd=float -lr=float -s=str -uc=int
 ```
 -nl, --num_layers: specify layers for network  
 -bz, --batch_size: how much data to feed in per time  
@@ -46,4 +46,5 @@ python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=st
 -r, --resume: resume a pretrained model  
 -lrd, --learning_rate_decay: how much to anneal learning rate  
 -lr, --learning_rate: learning rate to use  
--s, --shuffle: whether to shuffle data after every spoch . 
+-s, --shuffle: whether to shuffle data after every spoch  
+-uc, --update_check: how often to check current loss and to save model
