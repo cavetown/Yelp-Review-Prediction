@@ -22,15 +22,16 @@ parser.add_argument("-nl", "--num_layers", type=int, default=2, help="Specify nu
 parser.add_argument("-bz", "--batch_size", type=int, default=64, help="Batch size to train network")
 parser.add_argument("-e", "--epochs", type=int, default=5, help="number of epochs to train")
 parser.add_argument("-hu", "--hidden_units", type=int, default=64, help="number of hidden units for the network")
-parser.add_argument("-t", "--training", type=bool, default=True, help="Specify whether to train the network")
+parser.add_argument("-t", "--task", type=bool, default='train',
+                    help="Specify whether to train the network, predict, or  test")
 parser.add_argument("-kp", "--keep_prob", type=float, default=0.8, help="amount to keep during dropout")
 parser.add_argument("-sl", "--max_sequence_length", type=int, default=750, help="Max length of a sequence to be trained")
 parser.add_argument("-ep", "--embedding_path", type=str, default='./embeddings/numberbatch-en.txt', help="Path to embedding matrix")
 parser.add_argument("-f", "--file", type=str, default="./balanced_reviews.csv", help="Path to csv of preprocessed data")
 parser.add_argument("-ed", "--embedding_dim", type=int, default=300, help="Number of dimensions for your embedding matrix")
 parser.add_argument("-v", "--val_split", type=float, default=0.2, help="Amount of data to use for validation")
-parser.add_argument("-p", "--pickle", type=bool, default=True, help="Specify whether to pickle files")
-parser.add_argument("-r", "--resume", type=bool, default=True, help="Resume training")
+parser.add_argument("-p", "--pickle", type=str, default='true', help="Specify whether to pickle files")
+parser.add_argument("-r", "--resume", type=str, default='false', help="Resume training")
 parser.add_argument("-lrd", "--learning_rate_decay", type=float, default=0.95, help="Fraction of LR to keep every time")
 parser.add_argument("-lr", "--learning_rate", type=float, default=0.005, help="Learning Rate")
 parser.add_argument("-s", "--shuffle", type=str, default='false', help="shuffle data after each epoch")
@@ -125,6 +126,28 @@ train_writer.add_graph(train_graph)
 
 
 def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate, display_step=20, update_check=500):
+    '''
+    Main train file to run the code. It will take in the parameters and train the network and then save the model
+    every some iterations.
+
+    :param x_train: input to the network
+    :type x_train: list
+    :param y_train: labels for the network
+    :type y_train: list
+    :param batch_size: How large of a set of inputs to feed into network
+    :type batch_size: int
+    :param resume: Whether there exists a model and to use that one for training
+    :type resume: bool
+    :param keep_probability: How much of dropout to use
+    :type keep_probability: float
+    :param learning_rate: Learning rate for the network
+    :type learning_rate: float
+    :param display_step: How often to display updates onto the screen (how many iterations)
+    :type display_step: int
+    :param update_check: How often to check to save model (number of times per epoch)
+    :type update_check: int
+    :return: None
+    '''
 
     epochs = args.epochs
     summary_update_loss = []
@@ -208,13 +231,23 @@ def train(x_train, y_train, batch_size, resume, keep_probability, learning_rate,
                 learning_rate = min_learning_rate
             # Set shuffle to True if you want to shuffle data between epochs
             # This can add some randomness and potentially learn new patterns in data
-            #             if shuffle:
-            #                 x_train, y_train = shuffle_data(x_train, y_train)
+            # if args.shuffle.lower() == 'true':
+            #     x_train, y_train = utils.shuffle_data(x_train, y_train)
             if stop_early == stop:
                 print("Stopping Training.")
                 break
 
+
 def test(x_test, y_test):
+    '''
+    Tests the network to see how well the network has trained
+
+    :param x_test: input to the test function
+    :type x_test: list
+    :param y_test: labels for the test function
+    :type y_test: list
+    :return: None
+    '''
     with tf.Session(graph=train_graph) as sess:
         checkpoint = "./saves/best_model.ckpt"
         all_preds = []
@@ -250,7 +283,7 @@ def test(x_test, y_test):
     test_correct_pred = np.equal(y_predictions, y_true)
     test_accuracy = np.mean(test_correct_pred.astype(float))
 
-    print(test_accuracy)
+    print("Test accuracy is: " + str(test_accuracy))
 
 
 def predict():
@@ -280,6 +313,7 @@ def predict():
     counts = np.bincount(y_predictions)
     print("\nYou rated the restaurant: " + str(np.argmax(counts)) + " stars!")
 
+
 def main():
     df_balanced = pd.read_csv(args.file)
     ratings = df_balanced.stars.values.astype(int)
@@ -291,10 +325,10 @@ def main():
         utils.pickle_files("./data/pickles/word_embedding_matrix.p", word_embedding_matrix)
         utils.pickle_files("./data/pickles/tokenizer.p", tokenizer)
 
-    if args.training:
+    if args.task.lower() == 'train':
         train(x_train, y_train, args.batch_size, args.resume, args.keep_prob, args.learning_rate)
         test(x_test, y_test)
-    elif args.testing:
+    elif args.task.lower() == 'test':
         test(x_test, y_test)
-    elif args.predicting:
+    elif args.task.lower() == 'predict':
         predict()
