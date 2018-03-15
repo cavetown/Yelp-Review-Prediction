@@ -48,3 +48,7 @@ python predict_ratings.py -nl=int -bz=int -e=int -hu=int -t=str -kp=float -ep=st
 -lr, --learning_rate: learning rate to use  
 -s, --shuffle: whether to shuffle data after every epoch  
 -uc, --update_check: how often to check current loss and to save model
+
+### Results:  
+Final results for the network was able to achieve 62% accuracy with the spread of:
+![alt text](https://github.com/thomasan95/Yelp-Review-Prediction/blob/master/figures/cmatrix.png?raw=true)
