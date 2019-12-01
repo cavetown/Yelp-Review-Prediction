@@ -75,3 +75,4 @@ def get_contractions():
         "you're": "you are"
     }
     return contractions
+
